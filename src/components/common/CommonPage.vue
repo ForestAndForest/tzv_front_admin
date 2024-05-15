@@ -51,6 +51,8 @@
 </template>
 
 <script setup>
+import { AppCard, TheFooter } from '@/components/index.js'
+
 defineProps({
   back: {
     type: Boolean,
