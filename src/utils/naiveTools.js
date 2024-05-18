@@ -112,6 +112,7 @@ export function setupNaiveDiscreteApi() {
     { configProviderProps }
   )
 
+
   window.$loadingBar = loadingBar
   window.$notification = notification
   window.$message = setupMessage(message)

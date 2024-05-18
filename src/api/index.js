@@ -21,4 +21,6 @@ export default {
   getRolePermissions: () => request.get('/role/permissions/tree'),
   // 验证菜单路径
   validateMenuPath: (path) => request.get(`/permission/menu/validate?path=${path}`),
+
+  uploadImage: (data) => request.put('/file/img', data),
 }
