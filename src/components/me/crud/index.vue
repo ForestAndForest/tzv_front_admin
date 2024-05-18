@@ -95,7 +95,8 @@ const emit = defineEmits(['update:queryItems', 'onChecked', 'onDataChange'])
 const loading = ref(false)
 const initQuery = { ...props.queryItems }
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 10 })
+//修改分页大小为9
+const pagination = reactive({ page: 1, pageSize: 9 })
 
 async function handleQuery() {
   try {

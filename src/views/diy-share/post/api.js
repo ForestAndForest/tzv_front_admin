@@ -9,7 +9,7 @@
 import { request } from '@/utils'
 
 export default {
-  read: (params = {}) => request.get('/api/user', { params }),
+  read: (params = {}) => request.get('/api/post', { params }),
   updateStatus: (data) => request.patch(`/api/user/update/status/${data.id}`, data),
 
   //以下api未使用请勿轻易删除

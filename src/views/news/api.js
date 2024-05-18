@@ -9,12 +9,13 @@
 import { request } from '@/utils'
 
 export default {
-  read: (params = {}) => request.get('/api/user', { params }),
+  read: (params = {}) => request.get('/api/news', { params }),
   updateStatus: (data) => request.patch(`/api/user/update/status/${data.id}`, data),
+  create: (data) => request.post('/api/news', data),
+  update: (data) => request.put('/api/news', data),
+  delete: (id) => request.delete(`/api/news?id=${id}`),
 
   //以下api未使用请勿轻易删除
-  create: (data) => request.post('/user', data),
-  delete: (id) => request.delete(`/user/${id}`),
   resetPwd: (id, data) => request.patch(`/user/password/reset/${id}`, data),
   getAllRoles: () => request.get('/role?enable=1'),
 }

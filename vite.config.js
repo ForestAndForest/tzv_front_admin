@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
   const { VITE_TITLE, VITE_PUBLIC_PATH, VITE_PROXY_TARGET } = viteEnv
 
   return {
-    base: VITE_PUBLIC_PATH || '/',
+    base:  './',
     plugins: [
       Vue(),
       VueDevTools(),
