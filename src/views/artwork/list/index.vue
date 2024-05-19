@@ -56,6 +56,7 @@
           label-align="left"
           :label-width="80"
           :model="modalForm"
+          :rules="rules"
         >
           <n-form-item
             label="艺术品名"
@@ -63,10 +64,10 @@
             :rule="{
               required: true,
               message: '请输入艺术品名',
-              trigger: ['input', 'blur'],
+              trigger: ['blur', 'change'],
             }"
           >
-            <n-input v-model:value="modalForm.name" />
+            <n-input v-model:value="modalForm.name" placeholder="请输入你的艺术品名" />
           </n-form-item>
           <n-form-item label="描述" path="description">
             <n-input
@@ -77,33 +78,85 @@
                 maxRows: 5,
               }"
               placeholder="请介绍你的艺术品"
-              :disabled="modalAction !== 'add'"
             />
           </n-form-item>
           <n-form-item label="图片" path="image">
-            <n-upload v-model:value="modalForm.image">
-              <n-button>添加图片</n-button>
+            <n-upload
+              v-model:file-list="fileList"
+              :custom-request="fileRequest"
+              :max="1"
+              list-type="image-card"
+            >
+              <n-upload-dragger>
+                <div class="h-120 w-120 f-c-c flex-col">
+                  <i class="i-mdi:upload text-36"></i>
+                  <n-text class="text-11 color-gray">点击或者拖动文件到该区域来上传</n-text>
+                </div>
+              </n-upload-dragger>
             </n-upload>
           </n-form-item>
-          <n-form-item label="权限" path="permissionIds">
-            <n-tree
-              key-field="id"
-              label-field="name"
-              :selectable="false"
-              :data="permissionTree"
-              :checked-keys="modalForm.permissionIds"
-              :on-update:checked-keys="(keys) => (modalForm.permissionIds = keys)"
-              default-expand-all
-              checkable
-              check-on-click
-              class="cus-scroll max-h-200 w-full"
+          <n-form-item
+            :span="12"
+            label="类型"
+            path="type"
+            :rule="{
+              required: true,
+              message: '请选择类型',
+              trigger: ['blur', 'change'],
+              type: 'number',
+            }"
+          >
+            <n-select
+              v-model:value="modalForm.type"
+              placeholder="请选择类型"
+              :options="artworkType"
             />
           </n-form-item>
-          <n-form-item label="状态" path="enable">
-            <n-switch v-model:value="modalForm.enable">
-              <template #checked>启用</template>
-              <template #unchecked>停用</template>
-            </n-switch>
+          <n-form-item
+            label="库存"
+            path="stock"
+            :rule="{
+              required: true,
+              message: '请添加库存',
+              trigger: ['blur', 'change'],
+              type: 'number',
+            }"
+          >
+            <n-input-number v-model:value="modalForm.stock" placeholder="请输入库存" />
+          </n-form-item>
+          <n-form-item
+            label="售价"
+            path="price"
+            :rule="{
+              required: true,
+              message: '请输入售价',
+              trigger: ['blur', 'change'],
+              type: 'number',
+            }"
+          >
+            <n-input-number
+              v-model:value="modalForm.price"
+              placeholder="请输入售价"
+              :min="0"
+              :precision="2"
+              :show-button="false"
+              style="width: 26%"
+            />
+          </n-form-item>
+          <n-form-item
+            label="用料"
+            path="material"
+            :rule="{
+              required: true,
+              message: '请输入你的用料',
+              trigger: ['blur', 'change'],
+            }"
+          >
+            <n-input
+              v-model:value="modalForm.material"
+              placeholder="请输入你的用料"
+              style="width: 33%"
+            />
           </n-form-item>
         </n-form>
       </n-scrollbar>
@@ -112,16 +165,19 @@
 </template>
 
 <script setup>
-import { NTag, NAvatar, NButton, NSwitch } from 'naive-ui'
+import { NTag, NAvatar, NButton } from 'naive-ui'
 import { MeCrud, MeQueryItem, MeModal } from '@/components'
 import { useCrud } from '@/composables'
 import api from './api'
 import { h } from 'vue'
 import { CommonPage } from '@/components/index.js'
+import gApi from '@/api'
+import { useUserStore } from '@/store'
 
 defineOptions({ name: 'ArtworkMgt' })
 
-const router = useRouter()
+const userStore = useUserStore()
+const fileList = ref([])
 const artworkType = [
   {
     label: '茶杯',
@@ -148,6 +204,8 @@ const artworkState = [
   { label: '审核中', value: 3 },
   { label: '审核失败', value: 4 },
 ]
+const roles = ref([])
+api.getAllRoles().then(({ data = [] }) => (roles.value = data))
 
 const $table = ref(null)
 /** QueryBar筛选参数（可选） */
@@ -162,10 +220,10 @@ const columns = [
   {
     title: '图片',
     key: 'image',
-    render: ({ img }) =>
+    render: ({ image }) =>
       h(NAvatar, {
         size: 'medium',
-        src: img,
+        src: image,
       }),
   },
   {
@@ -245,15 +303,47 @@ const columns = [
   },
 ]
 
-const { modalRef, modalFormRef, modalAction, modalForm, handleAdd, handleDelete, handleEdit } =
-  useCrud({
-    name: '艺术品',
-    doCreate: api.create,
-    doDelete: api.delete,
-    doUpdate: api.update,
-    initForm: { enable: true },
-    refresh: () => $table.value?.handleSearch(),
-  })
-
-const permissionTree = ref([])
+const { modalRef, modalFormRef, modalForm, handleAdd, handleDelete, handleEdit } = useCrud({
+  name: '艺术品',
+  doCreate: api.create,
+  doDelete: api.delete,
+  doUpdate: api.update,
+  initForm: { publisher: userStore.userInfo.id },
+  refresh: () => $table.value?.handleSearch(),
+})
+watch(modalForm, (newValue) => {
+  fileList.value =
+    newValue.image !== undefined
+      ? [
+          {
+            id: new Date().getTime(),
+            name: 'image',
+            status: 'finished',
+            thumbnailUrl: newValue.imageUrl,
+          },
+        ]
+      : []
+})
+async function fileRequest({ file, onFinish }) {
+  try {
+    $message.loading('上传中..')
+    const formData = new FormData()
+    formData.append('file', file.file)
+    const image = (await gApi.uploadImage(formData)).data
+    modalForm.value.image = image
+    fileList.value = [
+      {
+        id: new Date().getTime(),
+        name: 'image',
+        status: 'finished',
+        thumbnailUrl: image,
+      },
+    ]
+    onFinish()
+    $message.destroy()
+    $message.success('上传成功')
+  } catch (e) {
+    $message.error('上传失败' + e)
+  }
+}
 </script>

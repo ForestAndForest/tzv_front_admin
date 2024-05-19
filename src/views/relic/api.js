@@ -9,11 +9,11 @@
 import { request } from '@/utils'
 
 export default {
-  create: (data) => request.post('/artwork', data),
-  read: (params = {}) => request.get('/artwork/page', { params }),
-  update: (data) => request.put('/artwork', data),
+  create: (data) => request.post('/relic', data),
+  read: (params = {}) => request.get('/relic/page', { params }),
+  update: (data) => request.put('/relic', data),
   updateStatus: (data) => request.patch(`/api/user/update/status/${data.id}`, data),
-  delete: (id) => request.delete(`/artwork/${id}`),
+  delete: (id) => request.delete(`/relic/${id}`),
 
   getAllRoles: () => request.get('/role?enable=1'),
 }
